@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+ 
+<head>
+    <title>Infi2 App</title>
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+</head>
+ 
+<body> 
+    <div class="container">
+        <div class="header">
+            <nav>
+                <ul class="nav nav-pills pull-right">
+                    <li role="presentation" class="active"><a href="#">Home</a>
+                </ul>
+            </nav>
+            <h3 class="text-muted">Python Flask App</h3>
+        </div>
+ 
+        <div class="jumbotron">
+            <h1>Infi 2</h1>
+        </div>
+        
+        <div class="input-group">
+            <input class="form-control" name="function" type="text" placeholder="function">
+            <div class="input-group-append">
+              <button class="btn btn-secondary" id="calc" type="submit">Calculate</button>
+            </div>
+          </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" crossorigin="anonymous" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"></script>
+    <script>window.jQuery || document.write('<script src="/docs/4.3/assets/js/vendor/jquery-slim.min.js"><\/script>')</script>
+    <script src="/docs/4.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous" integrity="sha384-xrRywqdh3PHs8keKZN+8zzc5TX0GRTLCcmivcbNJWm2rs5C8PRhcEn3czEjhAO9o"></script>
+    <script>
+    $(function() {
+        $('#calc').click(function() {
+    
+            $.ajax({
+                url: '/',
+                data: $('form').serialize(),
+                type: 'POST',
+                success: function(response) {
+                    console.log(response);
+                },
+                error: function(error) {
+                    console.log(error);
+                }
+            });
+        });
+    });
+    </script>
+</body>
+ 
+</html>
