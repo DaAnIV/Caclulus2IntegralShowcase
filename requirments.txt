@@ -1,0 +1,5 @@
+flask
+scipy
+matplotlib
+cexprtk
+numpy

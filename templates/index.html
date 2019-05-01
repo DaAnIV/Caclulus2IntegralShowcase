@@ -9,44 +9,94 @@
  
 <body> 
     <div class="container">
-        <div class="header">
-            <nav>
-                <ul class="nav nav-pills pull-right">
-                    <li role="presentation" class="active"><a href="#">Home</a>
-                </ul>
-            </nav>
-            <h3 class="text-muted">Python Flask App</h3>
-        </div>
- 
         <div class="jumbotron">
             <h1>Infi 2</h1>
         </div>
-        
-        <div class="input-group">
-            <input class="form-control" name="function" type="text" placeholder="function">
-            <div class="input-group-append">
-              <button class="btn btn-secondary" id="calc" type="submit">Calculate</button>
+
+        <form id="function_form" class="card p-2">
+            <div class="input-group">
+                <input class="form-control" style="width:70%" name="function" type="text" placeholder="function">
+                <input class="form-control" name="a" type="number" step="0.01" placeholder="a" value="0">
+                <input class="form-control" name="b" type="number" step="0.01" placeholder="b" value="1">
+                <input class="form-control" name="n" type="number" placeholder="n" value="20">
+                <div class="input-group-append">
+                  <input name="function_form" class="btn btn-secondary" id="calc" type="submit" value="Plot">
+                </div>
+                <br/>
             </div>
-          </div>
+            <div class="input-group">
+                <input class="form-control" name="error_method" type="text" placeholder="error_method">
+            </div>
+        </form>
+
+        <div>
+            <p class="lead text-muted" id="parse_error"></p>
+            <p class="lead text-muted" id="int_result"></p>
+            <p class="lead text-muted" id="diff_result"></p>
+            <p class="lead text-muted" id="error_boundary_result"></p>
+        </div>
+
+        <div>
+            <h3 id="RiemannTitle"></h3>
+            <div id="RiemannImg"></div>
+        </div>
+
+        <div>
+            <h3 id="DarbouxTitle"></h3>
+            <div id="DarbouxImg"></div>
+        </div>
     </div>
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" crossorigin="anonymous" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"></script>
-    <script>window.jQuery || document.write('<script src="/docs/4.3/assets/js/vendor/jquery-slim.min.js"><\/script>')</script>
-    <script src="/docs/4.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous" integrity="sha384-xrRywqdh3PHs8keKZN+8zzc5TX0GRTLCcmivcbNJWm2rs5C8PRhcEn3czEjhAO9o"></script>
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
     <script>
     $(function() {
-        $('#calc').click(function() {
-    
+        $('#function_form').submit(function() {
+            console.log("submit function");
+            let n = $('input[name=n]').val();
             $.ajax({
-                url: '/',
-                data: $('form').serialize(),
+                url: '/get_plot',
+                data: $('#function_form').serialize(),
                 type: 'POST',
-                success: function(response) {
-                    console.log(response);
+                success: function (data) {
+                    let parse_error = $("#parse_error");
+                    let riemann_title = $("#RiemannTitle");
+                    let riemann_img = $("#RiemannImg");
+                    let darboux_title = $("#DarbouxTitle");
+                    let darboux_img = $("#DarbouxImg");
+                    let int_result = $("#int_result");
+                    let diff_result = $("#diff_result");
+                    let error_boundary_result = $("#error_boundary_result");
+                    if(data['error']) {
+                        parse_error.text(data['error']);
+
+                        riemann_title.text("");
+                        riemann_img.html("");
+                        darboux_title.text("");
+                        darboux_img.html("");
+                        int_result.text("");
+                        diff_result.text("");
+                        error_boundary_result.text("");
+
+                        return
+                    }
+                    parse_error.text("");
+
+                    riemann_title.text(data['riemann_title']);
+                    riemann_img.html(data['riemann_img']);
+                    darboux_title.text(data['darboux_title']);
+                    darboux_img.html(data['darboux_img']);
+                    int_result.text(data['int_result']);
+                    diff_result.text(data['diff_result']);
+                    if(data['error_bound']) {
+                        error_boundary_result.text(data['error_bound']);
+                    }
                 },
-                error: function(error) {
+                error: function (error) {
                     console.log(error);
                 }
             });
+            return false;
         });
     });
     </script>
