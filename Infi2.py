@@ -2,12 +2,14 @@ import base64
 
 from flask import Flask, render_template, request, jsonify
 import scipy as sp
+import scipy.optimize
 import scipy.integrate
 import numpy as np
 import cexprtk
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 import io
+import copy
 
 app = Flask(__name__)
 
@@ -19,11 +21,12 @@ class ExpressionWrapper:
             symbols[param] = 1.0
         st = cexprtk.Symbol_Table(symbols, add_constants=True)
         self.expression = cexprtk.Expression(math_str, st)
+        self._constant = 1
 
     def _evaluate_for_parameters(self, parameters):
         for key in parameters:
             self.expression.symbol_table.variables[key] = parameters[key]
-        return self.expression()
+        return self._constant * self.expression()
 
     def _evaluate_for_x(self, x):
         return self._evaluate_for_parameters({'x': x})
@@ -33,6 +36,19 @@ class ExpressionWrapper:
         for x in values:
             result.append(self._evaluate_for_x(x))
         return result
+
+    def _get_minus_func(self):
+        minus_func = copy.copy(self)
+        minus_func._constant = -1
+        return minus_func
+
+    def get_minimum_for_partition(self, p):
+        return [sp.optimize.minimize_scalar(self, bounds=(p[i], p[i + 1]), method='bounded').fun for i in range(len(p)-1)]
+
+    def get_maximum_for_partition(self, p):
+        minus_func = self._get_minus_func()
+        min = minus_func.get_minimum_for_partition(p)
+        return [-x for x in min]
 
     def __call__(self, values):
         if type(values) is np.ndarray or type(values) is list:
@@ -55,7 +71,7 @@ def create_riemman_figure(func, P, T, dt, a, b, n):
 
     # Plot the function values at the chosen points, and the rectangles
     axis.plot(T, func(T), '.', markersize=10)
-    axis.bar(P[:-1], func(T), width=dt, alpha=0.2, align='edge')
+    axis.bar(P[:-1], func(T), width=dt, alpha=0.2, align='edge', edgecolor='black')
 
     # Now plot the "true" curve of the function
     x = np.linspace(a, b, n * 100)  # we take finer spacing to get a "smooth" graph
@@ -69,9 +85,12 @@ def create_darboux_figure(func, P, dt, a, b, n):
     fig = Figure()
     axis = fig.add_subplot(1, 1, 1)
 
+    lower_darboux = func.get_minimum_for_partition(P)
+    upper_darboux = func.get_maximum_for_partition(P)
+
     # Plot the function values at the chosen points, and the rectangles
-    axis.bar(P[:-1], func(P[:-1]), width=dt, alpha=0.2, align='edge', linewidth=0.8, edgecolor = 'blue')
-    axis.bar(P[:-1], func(P[1:]), width=dt, alpha=0.2, align='edge', linewidth=0.8, edgecolor = 'red')
+    axis.bar(P[:-1], lower_darboux, width=dt, alpha=0.2, align='edge', linewidth=0.8, color='blue', edgecolor='blue')
+    axis.bar(P[:-1], upper_darboux, width=dt, alpha=0.2, align='edge', linewidth=0.8, color='red', edgecolor='red')
 
     # Now plot the "true" curve of the function
     x = np.linspace(a, b, n * 100)  # we take finer spacing to get a "smooth" graph
@@ -106,8 +125,7 @@ def get_plot():
     except cexprtk.ParseException as e:
         return jsonify({'error': "Parse error {}".format(e)})
 
-    P = np.linspace(_a, _b, _n)  # Standard partition constant width
-    dt = (_b - _a) / _n
+    P, dt = np.linspace(_a, _b, _n, retstep=True)  # Standard partition constant width
     T = [np.random.rand() * dt + p for p in P[:-1]]  # Randomly chosen point
 
     riemann_fig = create_riemman_figure(_function, P, T, dt, _a, _b, _n)
