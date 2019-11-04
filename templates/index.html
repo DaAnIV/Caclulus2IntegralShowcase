@@ -1,32 +1,45 @@
-<!DOCTYPE html>
-<html lang="en">
- 
-<head>
-    <title>Infi2 App</title>
+{% import "bootstrap/wtf.html" as wtf %}
 
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-</head>
- 
-<body> 
+{% extends "base.html" %}
+{% block title %}
+    Integrals
+{% endblock %}
+{% block content %}
     <div class="container">
         <div class="jumbotron">
-            <h1>Infi 2</h1>
+            <h1>Integrals</h1>
         </div>
-
-        <form id="function_form" class="card p-2">
-            <div class="input-group">
-                <input class="form-control" style="width:70%" name="function" type="text" placeholder="function">
-                <input class="form-control" name="a" type="number" step="0.01" placeholder="a" value="0">
-                <input class="form-control" name="b" type="number" step="0.01" placeholder="b" value="1">
-                <input class="form-control" name="n" type="number" placeholder="n" value="20">
-                <div class="input-group-append">
-                  <input name="function_form" class="btn btn-secondary" id="calc" type="submit" value="Plot">
+        <form id=function_form method=post class="card p-2">
+            <div class="input-group container-fluid" style="width:100%">
+                {{ form.function_text.label }}:
+                <div class="row">
+                    <div class="col-sm-11">
+                        {{ form.function_text(class="form-control", placeholder=form.function_text.label.text) }}
+                    </div>
+                    <div class="col-sm-1">
+                        {{ form.submit(class="btn btn-secondary") }}
+                    </div>
                 </div>
                 <br/>
+                <div class="row">
+                    <div class="col-md-4">
+                        {{ form.a(class="form-control", data_toggle='tooltip', title=form.a.label.text) }}
+                    </div>
+                    <div class="col-sm-4">
+                        {{ form.b(class="form-control", data_toggle='tooltip', title=form.b.label.text) }}
+                    </div>
+                    <div class="col-md-4">
+                        {{ form.n(class="form-control", step=1, data_toggle='tooltip', title=form.n.label.text) }}
+                    </div>
+                </div>
+                <br/>
+                <div class="row">
+                    <div class="col-md-12">
+                        {{ form.error_method_text(class="form-control", placeholder=form.error_method_text.label.text) }}
+                    </div>
+                </div>
             </div>
-            <div class="input-group">
-                <input class="form-control" name="error_method" type="text" placeholder="error_method">
-            </div>
+            {{ form.hidden_tag() }}
         </form>
 
         <div>
@@ -46,60 +59,68 @@
             <div id="DarbouxImg"></div>
         </div>
     </div>
-    <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+{% endblock %}
+{% block scripts %}
+    {{ super() }}
+
     <script>
-    $(function() {
-        $('#function_form').submit(function() {
-            console.log("submit function");
-            let n = $('input[name=n]').val();
-            $.ajax({
-                url: '/get_plot',
-                data: $('#function_form').serialize(),
-                type: 'POST',
-                success: function (data) {
-                    let parse_error = $("#parse_error");
-                    let riemann_title = $("#RiemannTitle");
-                    let riemann_img = $("#RiemannImg");
-                    let darboux_title = $("#DarbouxTitle");
-                    let darboux_img = $("#DarbouxImg");
-                    let int_result = $("#int_result");
-                    let diff_result = $("#diff_result");
-                    let error_boundary_result = $("#error_boundary_result");
-                    if(data['error']) {
-                        parse_error.text(data['error']);
-
-                        riemann_title.text("");
-                        riemann_img.html("");
-                        darboux_title.text("");
-                        darboux_img.html("");
-                        int_result.text("");
-                        diff_result.text("");
-                        error_boundary_result.text("");
-
-                        return
+        $(function () {
+            $('#function_form').submit(function () {
+                console.log("submit function");
+                var url = "{{ url_for('integrals.get_plot_post') }}";
+                $.ajax({
+                    url: url,
+                    data: $('#function_form').serialize(),
+                    type: 'POST',
+                    success: function (data) {
+                        console.log(data);
+                        let parse_error = $("#parse_error");
+                        let riemann_title = $("#RiemannTitle");
+                        let riemann_img = $("#RiemannImg");
+                        let darboux_title = $("#DarbouxTitle");
+                        let darboux_img = $("#DarbouxImg");
+                        let int_result = $("#int_result");
+                        let diff_result = $("#diff_result");
+                        let error_boundary_result = $("#error_boundary_result");
+                        if (data['error']) {
+                            parse_error.text(data['error']);
+                            riemann_title.text("");
+                            riemann_img.html("");
+                            darboux_title.text("");
+                            darboux_img.html("");
+                            int_result.text("");
+                            diff_result.text("");
+                            error_boundary_result.text("");
+                            return
+                        }
+                        parse_error.text("");
+                        riemann_title.text(data['riemann_title']);
+                        riemann_img.html(data['riemann_img']);
+                        darboux_title.text(data['darboux_title']);
+                        darboux_img.html(data['darboux_img']);
+                        int_result.text(data['int_result']);
+                        diff_result.text(data['diff_result']);
+                        if (data['error_bound']) {
+                            error_boundary_result.text(data['error_bound']);
+                        }
+                    },
+                    error: function (error) {
+                        console.log(error);
                     }
-                    parse_error.text("");
-
-                    riemann_title.text(data['riemann_title']);
-                    riemann_img.html(data['riemann_img']);
-                    darboux_title.text(data['darboux_title']);
-                    darboux_img.html(data['darboux_img']);
-                    int_result.text(data['int_result']);
-                    diff_result.text(data['diff_result']);
-                    if(data['error_bound']) {
-                        error_boundary_result.text(data['error_bound']);
+                });
+                return false;
+            });
+            // Inject our CSRF token into our AJAX request.
+            $.ajaxSetup({
+                beforeSend: function (xhr, settings) {
+                    if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+                        xhr.setRequestHeader("X-CSRFToken", "{{ form.csrf_token._value() }}")
                     }
-                },
-                error: function (error) {
-                    console.log(error);
                 }
             });
-            return false;
+            $(function () {
+                $('[data-toggle="tooltip"]').tooltip()
+            })
         });
-    });
     </script>
-</body>
- 
-</html>
+{% endblock %}
