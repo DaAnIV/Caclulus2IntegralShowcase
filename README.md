@@ -1,4 +1,4 @@
-# Fourier from SVG
+# Caclulus 2 integral showcase
 A flask website to draw Riemann sums and Darboux sums for pretty much any function
 
 Just install the requirments and run the site and it should work.
